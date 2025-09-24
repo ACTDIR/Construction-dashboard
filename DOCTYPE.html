@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Construction Pulse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a single-page dashboard with a fixed sidebar for navigation. This structure was chosen over a simple linear document to mirror the organized, section-by-section flow of the director's meeting. It allows users (the project team) to quickly jump to a specific topic of interest, either during preparation, in the meeting itself, or for review. The user flow starts with a high-level "Dashboard" for an immediate project health check, then allows deep dives into specific areas like Safety, Schedule, and Financials. This non-linear, task-oriented approach enhances usability and efficiency, reflecting the core principles of the source report. -->
+    <!-- Visualization & Content Choices: The application uses a mix of stat cards, interactive tables, and charts to present information effectively. Stat cards on the dashboard provide quick, high-level insights (Goal: Inform). A simplified Gantt-like timeline for the "Look Forward" section visually organizes upcoming tasks (Goal: Organize). Interactive tables for "Paperwork" and "Action Items" allow users to filter and find relevant information quickly (Goal: Organize/Track). Donut charts from Chart.js are used for "Financials" and "Safety" to show proportions clearly (Goal: Inform/Compare). All choices avoid SVG/Mermaid, using Canvas for charts and structured HTML/Tailwind for diagrams, ensuring a dynamic and maintainable single-file application. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar-link.active, .sidebar-link:hover {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border-right: 4px solid #0ea5e9;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        .gantt-grid {
+            display: grid;
+            grid-template-columns: 100px repeat(21, 1fr);
+            gap: 2px;
+        }
+        .gantt-day {
+            text-align: center;
+            font-size: 0.75rem;
+            padding: 4px 0;
+        }
+        .gantt-task {
+            grid-column-start: var(--start-day);
+            grid-column-end: span var(--duration);
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="flex h-screen bg-slate-50">
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full">
+            <div class="p-6 border-b border-slate-200">
+                <h1 class="text-xl font-bold text-slate-800">Construction Pulse</h1>
+                <p class="text-sm text-slate-500">Project: Northpoint Tower</p>
+            </div>
+            <nav id="sidebarNav" class="flex-1 p-4 space-y-2">
+                <a href="#dashboard" data-target="dashboard" class="sidebar-link active flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="mr-3">📊</span> Dashboard
+                </a>
+                <a href="#safety" data-target="safety" class="sidebar-link flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="mr-3">🛡️</span> Safety First
+                </a>
+                <a href="#look-back" data-target="look-back" class="sidebar-link flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="mr-3">⏪</span> Look Back
+                </a>
+                <a href="#look-forward" data-target="look-forward" class="sidebar-link flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="mr-3">⏩</span> Look Forward (3-Week)
+                </a>
+                <a href="#paperwork" data-target="paperwork" class="sidebar-link flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="mr-3">📋</span> Paperwork & Procurement
+                </a>
+                <a href="#financials" data-target="financials" class="sidebar-link flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="mr-3">💰</span> Financials
+                </a>
+                <a href="#actions" data-target="actions" class="sidebar-link flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="mr-3">✅</span> Action Items
+                </a>
+            </nav>
+            <div class="p-4 border-t border-slate-200">
+                <p class="text-xs text-slate-400">"Tell me what I need to know, not what I want to hear."</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 ml-64 p-8 overflow-y-auto">
+            
+            <section id="dashboard" class="content-section active">
+                <h2 class="text-3xl font-bold mb-1">Project Dashboard</h2>
+                <p class="text-slate-500 mb-6">A high-level overview of the project's health. This is our reality check before we dive into the details.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="font-semibold text-lg text-green-600">Safety Status</h3>
+                        <p class="text-3xl font-bold mt-2">0 Incidents</p>
+                        <p class="text-sm text-slate-500 mt-1">1 Near Miss Reported</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="font-semibold text-lg text-blue-600">Schedule</h3>
+                        <p class="text-3xl font-bold mt-2">On Track</p>
+                        <p class="text-sm text-slate-500 mt-1">Key milestone met this week.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="font-semibold text-lg text-orange-500">Budget</h3>
+                        <p class="text-3xl font-bold mt-2">Caution</p>
+                        <p class="text-sm text-slate-500 mt-1">Steel costs trending high.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold text-lg mb-4">Critical Action Items</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-3">Task</th>
+                                    <th class="p-3">Owner</th>
+                                    <th class="p-3">Due Date</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b hover:bg-slate-50">
+                                    <td class="p-3">Finalize concrete mix design submittal</td>
+                                    <td class="p-3">J. Doe (PM)</td>
+                                    <td class="p-3">2025-09-26</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">High Priority</span></td>
+                                </tr>
+                                <tr class="border-b hover:bg-slate-50">
+                                    <td class="p-3">Confirm delivery of long-lead HVAC units</td>
+                                    <td class="p-3">M. Smith (APM)</td>
+                                    <td class="p-3">2025-09-29</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">In Progress</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="safety" class="content-section">
+                <h2 class="text-3xl font-bold mb-1">🛡️ Safety First: The 5-Minute Huddle</h2>
+                <p class="text-slate-500 mb-6">Safety is non-negotiable. This is a no-frills rundown of our performance and focus.</p>
+                 <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg">Past Week Incidents</h3>
+                            <p class="text-slate-600 mt-1">One near-miss reported on Tuesday. A ladder was found to be unstable during a routine check. No injuries.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg">Corrective Action Taken</h3>
+                            <p class="text-slate-600 mt-1">Immediate stop-work on the ladder. All ladders on-site were re-inspected. A toolbox talk on ladder safety was conducted for all crews Wednesday morning.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg">Coming Week's Safety Focus</h3>
+                            <p class="text-slate-600 mt-1">Housekeeping and trip hazard prevention, especially around the new material laydown areas.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="font-semibold text-lg mb-4 text-center">Weekly Safety Record</h3>
+                        <div class="chart-container">
+                            <canvas id="safetyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="look-back" class="content-section">
+                <h2 class="text-3xl font-bold mb-1">⏪ The Look-Back: Where We Are</h2>
+                <p class="text-slate-500 mb-6">A rapid-fire review of the past week's progress against the schedule. No excuses, just facts.</p>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold text-lg mb-4">Past Week's Milestones</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">✓</div>
+                            <div class="ml-4">
+                                <p class="font-semibold">Level 3 Slab Pour</p>
+                                <p class="text-sm text-slate-500">Completed on schedule, Thursday.</p>
+                            </div>
+                        </div>
+                         <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">!</div>
+                            <div class="ml-4">
+                                <p class="font-semibold">East Wall Framing</p>
+                                <p class="text-sm text-slate-500">Delayed by 1 day due to late material delivery. Impact mitigated.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold">…</div>
+                            <div class="ml-4">
+                                <p class="font-semibold">Underground Plumbing Inspection</p>
+                                <p class="text-sm text-slate-500">In Progress. Awaiting city inspector, scheduled for Friday.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="look-forward" class="content-section">
+                <h2 class="text-3xl font-bold mb-1">⏩ The Look-Forward: The Next 3 Weeks</h2>
+                <p class="text-slate-500 mb-6">This is the most crucial part of the meeting. We're solving problems before they happen.</p>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <div class="gantt-grid text-sm">
+                        <div class="font-semibold sticky left-0 bg-white">Trade</div>
+                        <div class="gantt-day font-semibold col-span-7">Week 1</div>
+                        <div class="gantt-day font-semibold col-span-7">Week 2</div>
+                        <div class="gantt-day font-semibold col-span-7">Week 3</div>
+                        
+                        <div class="font-semibold sticky left-0 bg-white p-2 border-t">Concrete</div>
+                        <div class="col-span-21 border-t p-2 grid grid-cols-21 gap-px">
+                            <div class="gantt-task bg-blue-500 text-white text-xs rounded p-1" style="--start-day: 1; --duration: 5;">Lvl 4 Decking</div>
+                            <div class="gantt-task bg-blue-500 text-white text-xs rounded p-1" style="--start-day: 8; --duration: 5;">Lvl 4 Pour Prep</div>
+                            <div class="gantt-task bg-blue-600 text-white text-xs rounded p-1 font-bold" style="--start-day: 13; --duration: 1;">Lvl 4 Pour</div>
+                        </div>
+
+                        <div class="font-semibold sticky left-0 bg-white p-2 border-t">Steel</div>
+                        <div class="col-span-21 border-t p-2 grid grid-cols-21 gap-px">
+                            <div class="gantt-task bg-gray-500 text-white text-xs rounded p-1" style="--start-day: 3; --duration: 10;">Exterior Studs</div>
+                            <div class="gantt-task bg-gray-500 text-white text-xs rounded p-1" style="--start-day: 15; --duration: 7;">Interior Framing</div>
+                        </div>
+
+                        <div class="font-semibold sticky left-0 bg-white p-2 border-t">MEP</div>
+                        <div class="col-span-21 border-t p-2 grid grid-cols-21 gap-px">
+                            <div class="gantt-task bg-orange-500 text-white text-xs rounded p-1" style="--start-day: 6; --duration: 12;">Lvl 2 Rough-in</div>
+                        </div>
+                        
+                        <div class="font-semibold sticky left-0 bg-white p-2 border-t">Inspections</div>
+                        <div class="col-span-21 border-t p-2 grid grid-cols-21 gap-px">
+                            <div class="gantt-task bg-red-500 text-white text-xs rounded p-1" style="--start-day: 12; --duration: 1;">Deck Inspection</div>
+                            <div class="gantt-task bg-red-500 text-white text-xs rounded p-1" style="--start-day: 20; --duration: 1;">MEP Rough-in</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="paperwork" class="content-section">
+                <h2 class="text-3xl font-bold mb-1">📋 Paperwork & Procurement: The Project's Lifeblood</h2>
+                <p class="text-slate-500 mb-6">We don't get held up by administrative bottlenecks. Raise the red flags early and often.</p>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold text-lg mb-4">RFIs & Submittals</h3>
+                     <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-3">#</th>
+                                    <th class="p-3">Subject</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Due</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b hover:bg-slate-50">
+                                    <td class="p-3">RFI-045</td>
+                                    <td class="p-3">Clarification on window flashing detail</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Overdue</span></td>
+                                    <td class="p-3">2025-09-22</td>
+                                </tr>
+                                <tr class="border-b hover:bg-slate-50">
+                                    <td class="p-3">SUB-082</td>
+                                    <td class="p-3">Air Handling Unit (AHU-1)</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Approved</span></td>
+                                    <td class="p-3">N/A</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                 <div class="mt-8 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold text-lg mb-4">Long-Lead Procurement</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-3">Item</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Est. Delivery</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b hover:bg-slate-50">
+                                    <td class="p-3">Elevator Package</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">In Fabrication</span></td>
+                                    <td class="p-3">2025-11-15</td>
+                                </tr>
+                                <tr class="border-b hover:bg-slate-50">
+                                    <td class="p-3">Custom Millwork</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Awaiting Submittal Approval</span></td>
+                                    <td class="p-3">TBD</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="financials" class="content-section">
+                <h2 class="text-3xl font-bold mb-1">💰 Financials: The Bottom Line</h2>
+                <p class="text-slate-500 mb-6">A quick check on the financial health of the project. Are we making or losing money, and why?</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="font-semibold text-lg mb-4 text-center">Budget Overview</h3>
+                         <div class="space-y-4 text-center">
+                            <div>
+                                <p class="text-sm text-slate-500">Total Budget</p>
+                                <p class="text-2xl font-bold">$15,000,000</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500">Spent to Date</p>
+                                <p class="text-2xl font-bold">$4,500,000</p>
+                            </div>
+                             <div>
+                                <p class="text-sm text-slate-500">Remaining</p>
+                                <p class="text-2xl font-bold text-green-600">$10,500,000</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="font-semibold text-lg mb-4 text-center">Cost Allocation</h3>
+                        <div class="chart-container">
+                            <canvas id="financialsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="actions" class="content-section">
+                <h2 class="text-3xl font-bold mb-1">✅ Action Items: Decisive Action</h2>
+                <p class="text-slate-500 mb-6">We end with clear action items and accountability. Know what you need to do before you leave.</p>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-lg">Current Action Items</h3>
+                        <div class="flex space-x-2">
+                             <select id="actionOwnerFilter" class="p-2 border rounded-md text-sm">
+                                <option value="all">All Owners</option>
+                                <option value="PM">PM</option>
+                                <option value="APM">APM</option>
+                                <option value="Super">Super</option>
+                             </select>
+                             <select id="actionStatusFilter" class="p-2 border rounded-md text-sm">
+                                <option value="all">All Statuses</option>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                             </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-3">Task</th>
+                                    <th class="p-3">Owner</th>
+                                    <th class="p-3">Due Date</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="actionItemsTable">
+                                <tr data-owner="PM" data-status="Not Started">
+                                    <td class="p-3">Resolve RFI-045 with architect</td>
+                                    <td class="p-3">PM</td>
+                                    <td class="p-3">2025-09-26</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Not Started</span></td>
+                                </tr>
+                                <tr data-owner="APM" data-status="In Progress">
+                                    <td class="p-3">Get revised quote for steel price increase</td>
+                                    <td class="p-3">APM</td>
+                                    <td class="p-3">2025-09-29</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">In Progress</span></td>
+                                </tr>
+                                <tr data-owner="Super" data-status="Completed">
+                                    <td class="p-3">Coordinate laydown area with MEP foreman</td>
+                                    <td class="p-3">Super</td>
+                                    <td class="p-3">2025-09-24</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Completed</span></td>
+                                </tr>
+                                <tr data-owner="Super" data-status="Not Started">
+                                    <td class="p-3">Schedule pre-pour inspection for Level 4</td>
+                                    <td class="p-3">Super</td>
+                                    <td class="p-3">2025-10-01</td>
+                                    <td class="p-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Not Started</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sidebarNav = document.getElementById('sidebarNav');
+    const sections = document.querySelectorAll('.content-section');
+    const links = document.querySelectorAll('.sidebar-link');
+
+    const showSection = (targetId) => {
+        sections.forEach(section => {
+            section.classList.toggle('active', section.id === targetId);
+        });
+        links.forEach(link => {
+            link.classList.toggle('active', link.dataset.target === targetId);
+        });
+    };
+
+    sidebarNav.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A' && e.target.dataset.target) {
+            e.preventDefault();
+            const targetId = e.target.dataset.target;
+            showSection(targetId);
+        }
+    });
+
+    const initialSection = window.location.hash.substring(1) || 'dashboard';
+    showSection(initialSection);
+    
+    const createChart = (ctx, type, data, options) => new Chart(ctx, { type, data, options });
+
+    const commonChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+        },
+    };
+
+    const safetyCtx = document.getElementById('safetyChart')?.getContext('2d');
+    if (safetyCtx) {
+        createChart(safetyCtx, 'doughnut', {
+            labels: ['Safe Days', 'Near Misses', 'Incidents'],
+            datasets: [{
+                data: [30, 1, 0],
+                backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+            }]
+        }, commonChartOptions);
+    }
+
+    const financialsCtx = document.getElementById('financialsChart')?.getContext('2d');
+    if (financialsCtx) {
+        createChart(financialsCtx, 'doughnut', {
+            labels: ['Structure', 'MEP', 'Finishes', 'Contingency'],
+            datasets: [{
+                data: [40, 25, 20, 15],
+                backgroundColor: ['#3b82f6', '#f97316', '#8b5cf6', '#6b7280'],
+            }]
+        }, commonChartOptions);
+    }
+    
+    const actionOwnerFilter = document.getElementById('actionOwnerFilter');
+    const actionStatusFilter = document.getElementById('actionStatusFilter');
+    const actionItemsTable = document.getElementById('actionItemsTable').querySelectorAll('tr');
+
+    function filterActionItems() {
+        const owner = actionOwnerFilter.value;
+        const status = actionStatusFilter.value;
+
+        actionItemsTable.forEach(row => {
+            const rowOwner = row.dataset.owner;
+            const rowStatus = row.dataset.status;
+
+            const ownerMatch = owner === 'all' || rowOwner === owner;
+            const statusMatch = status === 'all' || rowStatus === status;
+
+            row.style.display = (ownerMatch && statusMatch) ? '' : 'none';
+        });
+    }
+
+    actionOwnerFilter.addEventListener('change', filterActionItems);
+    actionStatusFilter.addEventListener('change', filterActionItems);
+});
+</script>
+</body>
+</html>
